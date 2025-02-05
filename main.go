@@ -41,10 +41,23 @@ func main() {
     // se inizializa Gin
     router := gin.Default()
 
-    // se configuran las rutas rutas
+    // se configuran las rutas
     routes.SetupRoutes(router, userController)
     routes.SetupOrderRoutes(router, orderController)
 
-    // Se hacer inicio del servidor
-    router.Run(":8080")
+    // Ejecutar el servidor principal en el puerto 8080
+    go func() {
+        router.Run(":8080")
+    }()
+
+    // Ejecutar short polling y long polling en goroutines en un puerto diferente
+    go func() {
+        pollingRouter := gin.Default()
+        pollingRouter.GET("/users/shortpoll", userController.ShortPollUsers)
+        pollingRouter.GET("/users/longpoll", userController.LongPollUsers)
+        pollingRouter.GET("/orders/shortpoll", orderController.ShortPollOrders)
+        pollingRouter.GET("/orders/longpoll", orderController.LongPollOrders)
+        pollingRouter.Run(":8081")
+    }()
+    select {}
 }
